@@ -1,6 +1,6 @@
 // lib/weather.ts
 
-import { WeatherInfo, WeatherCondition } from "@/types";
+import { WeatherInfo, WeatherCondition, WeatherAnalysis } from "@/types";
 
 // 제주도 좌표 (제주시청 기준)
 const JEJU_COORDINATES = {
@@ -43,7 +43,7 @@ const weatherMainMap: Record<string, string> = {
 // OpenWeatherMap API에서 날씨 정보 가져오기
 export async function getJejuWeather(
   lat: string,
-  lon: string,
+  lon: string
 ): Promise<WeatherInfo> {
   const apiKey = process.env.OPENWEATHER_API_KEY;
 
@@ -80,9 +80,7 @@ export async function getJejuWeather(
 }
 
 // 날씨 정보를 분석해서 추천 조건 생성
-export function analyzeWeatherCondition(
-  weather: WeatherInfo,
-): WeatherCondition {
+export function analyzeWeatherCondition(weather: WeatherInfo): WeatherAnalysis {
   const isRainy = ["Rain", "Drizzle", "Thunderstorm"].includes(weather.main);
   const isSnowy = weather.main === "Snow";
   const isHot = weather.temperature >= 28;
@@ -109,7 +107,7 @@ export function analyzeWeatherCondition(
       "미술관",
       "카페",
       "아쿠아리움",
-      "쇼핑",
+      "쇼핑"
     );
   } else if (isHot) {
     searchKeywords.push("계곡", "동굴", "실내", "에어컨", "바다", "수영장");

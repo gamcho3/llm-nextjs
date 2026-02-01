@@ -9,16 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@langchain/classic": "^1.0.10",
-    "@langchain/core": "^1.1.17",
-    "@langchain/google-genai": "^2.1.13",
-    "faiss-node": "^0.5.1",
-    "langchain": "^1.2.13",
+    "@langchain/community": "^1.1.10",
+    "@langchain/google-genai": "^2.1.14",
+    "langchain": "^1.2.16",
     "next": "16.1.4",
     "papaparse": "^5.5.3",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "zod": "^4.3.5"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
