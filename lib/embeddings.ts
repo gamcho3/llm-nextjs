@@ -9,7 +9,7 @@ export function getEmbeddings(): GoogleGenerativeAIEmbeddings {
   if (!embeddings) {
     embeddings = new GoogleGenerativeAIEmbeddings({
       apiKey: process.env.GOOGLE_API_KEY!,
-      modelName: "embedding-001",
+      modelName: "text-embedding-004",
     });
   }
   return embeddings;

@@ -18,7 +18,7 @@ export function loadPlaces(): Place[] {
 
   // 3) 필요한 필드만 골라서 정리
   const places: Place[] = (data as any[])
-    .filter((row) => row["장소명"] && row["주소"]) // 이름·주소 없는 행 제외
+    .filter((row) => row["장소명"] && row["도로명주소"]) // 이름·주소 없는 행 제외
     .map((row) => ({
       name: row["장소명"]?.trim() || "",
       address: row["주소"]?.trim() || "",
