@@ -20,7 +20,7 @@ interface PlaceCardProps {
 
 export function PlaceCard({ place }: PlaceCardProps) {
   return (
-    <div className="flex-shrink-0 w-64 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+    <div className="shrink-0 w-64 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       {/* 카드 헤더 (날씨) */}
       <div className="bg-gray-50 px-4 py-2 border-b text-xs text-gray-500 flex justify-between items-center">
         <span>{place.regionLabel || "제주"}</span>
