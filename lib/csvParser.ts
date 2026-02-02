@@ -21,7 +21,7 @@ export function loadPlaces(): Place[] {
     .filter((row) => row["장소명"] && row["도로명주소"]) // 이름·주소 없는 행 제외
     .map((row) => ({
       name: row["장소명"]?.trim() || "",
-      address: row["주소"]?.trim() || "",
+      address: row["지번주소"]?.trim() || "",
       roadAddress: row["도로명주소"]?.trim() || "",
       latitude: parseFloat(row["위도"]) || 0,
       longitude: parseFloat(row["경도"]) || 0,
@@ -32,7 +32,10 @@ export function loadPlaces(): Place[] {
   console.log(`✅ ${places.length}개 장소 로드 완료`);
   return places;
 }
-
+/**
+ *
+ * @returns  CSV 파일의 장소 데이터를 RAG(Retrieval-Augmented Generation) 시스템에서 사용할 수 있는 문서 형식으로 변환
+ */
 export function processCSVToDocuments() {
   const places = loadPlaces();
   return places.map((place, index) => ({

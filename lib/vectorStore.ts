@@ -1,41 +1,42 @@
 // lib/vectorStore.ts
 
-import { HNSWLib } from "@langchain/community/vectorstores/hnswlib";
 import { Document } from "@langchain/core/documents";
 import { getEmbeddings } from "./embeddings";
 import { loadPlaces } from "./csvParser";
 import { Place } from "@/types";
 
-// 메모리에 벡터 저장소를 캐시 (서버가 살아있는 동안 유지)
-let vectorStore: HNSWLib | null = null;
-const VECTOR_STORE_PATH = "data/vector_store_v2";
+// 간단한 인메모리 벡터 저장소
+interface VectorStore {
+  docs: Document[];
+  embeddings: number[][];
+}
 
-export async function getVectorStore(): Promise<HNSWLib> {
-  if (vectorStore) return vectorStore;
+let vectorStore: VectorStore | null = null;
 
-  // 1) 디스크에 저장된 인덱스가 있는지 확인 (API 호출 절약)
-  try {
-    const fs = await import("fs");
-    const path = await import("path");
-    const fullPath = path.join(process.cwd(), VECTOR_STORE_PATH);
+// 코사인 유사도 계산
+function cosineSimilarity(a: number[], b: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
 
-    if (fs.existsSync(fullPath)) {
-      console.log("📂 기존 벡터 저장소 로드 중...");
-      vectorStore = await HNSWLib.load(fullPath, getEmbeddings());
-      console.log("✅ 벡터 저장소 로드 완료 (API 호출 없음)");
-      return vectorStore;
-    }
-  } catch (error) {
-    console.error("⚠️ 벡터 저장소 로드 실패 (새로 생성합니다):", error);
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
   }
 
-  console.log("🔄 새로운 벡터 저장소 생성 중... (API 호출 발생)");
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
 
-  // 2) 장소 데이터 로드 (개수 늘림: 5 -> 1000 or 전체)
-  //    API Quota를 고려하여 적절히 조절. 저장소가 저장되면 다음부터는 호출 안 함.
-  const places: Place[] = loadPlaces().slice(0, 300);
+export async function getVectorStore(): Promise<VectorStore> {
+  if (vectorStore) return vectorStore;
 
-  // 3) 각 장소를 "문서"로 변환
+  console.log("🔄 새로운 벡터 저장소 생성 중...");
+
+  // 장소 데이터 로드
+  const places: Place[] = loadPlaces().slice(0, 500);
+
+  // 각 장소를 "문서"로 변환
   const docs = places.map(
     (place) =>
       new Document({
@@ -59,16 +60,12 @@ export async function getVectorStore(): Promise<HNSWLib> {
       }),
   );
 
-  // 4) 임베딩 생성 & 벡터 저장소 생성
-  vectorStore = await HNSWLib.fromDocuments(docs, getEmbeddings());
+  // 임베딩 생성
+  const embedder = getEmbeddings();
+  const texts = docs.map((doc) => doc.pageContent);
+  const embeddings = await embedder.embedDocuments(texts);
 
-  // 5) 디스크에 저장 (다음 실행 때 API 아끼기 위함)
-  try {
-    await vectorStore.save(VECTOR_STORE_PATH);
-    console.log(`✅ 벡터 저장소 저장 완료 (${VECTOR_STORE_PATH})`);
-  } catch (err) {
-    console.error("⚠️ 벡터 저장소 저장 실패:", err);
-  }
+  vectorStore = { docs, embeddings };
 
   console.log(`✅ 벡터 저장소 완성 — 문서 ${docs.length}개`);
   return vectorStore;
@@ -76,6 +73,19 @@ export async function getVectorStore(): Promise<HNSWLib> {
 
 export async function searchPlaces(query: string, limit: number = 5) {
   const store = await getVectorStore();
-  const results = await store.similaritySearch(query, limit);
-  return results;
+
+  // 쿼리 임베딩 생성
+  const embedder = getEmbeddings();
+  const queryEmbedding = await embedder.embedQuery(query);
+
+  // 모든 문서와의 유사도 계산
+  const similarities = store.embeddings.map((embedding, index) => ({
+    doc: store.docs[index],
+    score: cosineSimilarity(queryEmbedding, embedding),
+  }));
+
+  // 유사도 순으로 정렬하고 상위 결과 반환
+  similarities.sort((a, b) => b.score - a.score);
+
+  return similarities.slice(0, limit).map((item) => item.doc);
 }

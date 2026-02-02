@@ -4,12 +4,11 @@
 // RAG 체인 — 검색 + 장소별 날씨 + AI 답변
 // ════════════════════════════════════════════
 
-import { getVectorStore } from "./vectorStore";
+import { searchPlaces } from "./vectorStore";
 import { getGeminiModel } from "./gemini";
 import {
   getWeatherForPlaces,
   getWeatherRecommendation,
-  WeatherData,
   PlaceWeather,
 } from "./weather";
 
@@ -50,8 +49,7 @@ export async function chat(userQuestion: string): Promise<ChatResponse> {
   //  1단계: 벡터 검색 — 질문과 비슷한 장소 찾기
   // ══════════════════════════════════════
 
-  const vectorStore = await getVectorStore();
-  const searchResults = await vectorStore.similaritySearch(userQuestion, 5);
+  const searchResults = await searchPlaces(userQuestion, 5);
   // → 질문과 의미가 비슷한 장소 5개를 돌려줌
   // → 각 결과에는 pageContent(텍스트)와 metadata(원본 정보)가 있음
 
@@ -115,7 +113,7 @@ ${placesContext}
 1. 질문과 관련된 장소를 위 목록에서 찾아 구체적으로 설명하세요.
 2. 목록에 없는 장소나 정보는 절대 지어내지 마세요. 찾는 정보가 없으면 솔직히 말하세요.
 3. 현재 날씨(기온, 날씨 상태)를 고려하여 방문하기 좋은지 조언하세요. (예: 비오면 실내 추천)
-4. 답변은 친절하게 하되, 500자 이내로 요약하여 문장이 끊기지 않게 하세요.
+4. 답변은 친절하게 하되, 100자 이내로 요약하여 문장이 끊기지 않게 하세요.
 
 ## 사용자 질문
 ${userQuestion}
